@@ -1,0 +1,40 @@
+[network]
+host = "0.0.0.0"
+port = 80
+
+[info]
+relay_url = "wss://nostr.robg.live"
+name = "nostr-rdg-relay"
+description = "Nostr Relay by Rob Garrett"
+pubkey = "7a7d16c979a7f1906084e5f12d543753a4f2375d5883b884a59a7b151a700636"
+contact = "mailto:rob@robg.live"
+
+[database]
+engine = "sqlite"
+in_memory = false
+data_directory = "./db"
+
+[logging]
+folder_path = "./logs"
+
+[options]
+# Reject events that have timestamps greater than this many seconds in
+# the future.  Recommended to reject anything greater than 30 minutes
+# from the current time, but the default is to allow any date.
+reject_future_seconds = 1800
+
+[limits]
+# Limit events created per second, averaged over one minute.  Must be
+# an integer.  If not set (or set to 0), there is no limit.  Note:
+# this is for the server as a whole, not per-connection.
+#
+# Limiting event creation is highly recommended if your relay is
+# public!
+#
+messages_per_sec = 5
+
+# Limit client subscriptions created, averaged over one minute.  Must
+# be an integer.  If not set (or set to 0), defaults to unlimited.
+# Strongly recommended to set this to a low value such as 10 to ensure
+# fair service.
+subscriptions_per_min = 10
