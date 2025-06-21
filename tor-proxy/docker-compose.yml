@@ -3,8 +3,7 @@ services:
     image: dockurr/tor
     container_name: tor
     networks:
-      tor-proxy-net:
-        ipv4_address: 172.25.0.100
+      - tor-proxy-net
     volumes:
       - ./torrc:/etc/tor/torrc
       - tor_config:/etc/tor
@@ -20,15 +19,16 @@ services:
     image: alpine/socat
     container_name: socat
     restart: unless-stopped
+    env_file: 
+      - .env
+    # Ensure that the ONION_ADDRESS is set in the .env file
+    # Example: ONION_ADDRESS=your.onion.address
     depends_on:
       tor:
         condition: service_healthy
-    entrypoint: ["socat"]
-    # Add onion address to environment or use a .env file
     command: "TCP-LISTEN:8080,fork,reuseaddr SOCKS4A:tor:${ONION_ADDRESS}:80,socksport=9050"
     networks:
-       tor-proxy-net:
-        ipv4_address: 172.25.0.101
+       - tor-proxy-net
     healthcheck:
       test: ["CMD", "nc", "-z", "socat", "8080"]
       interval: 20s
@@ -50,8 +50,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     networks:
-      tor-proxy-net:
-        ipv4_address: 172.25.0.102
+      - tor-proxy-net
     healthcheck:
       test: ["CMD", "nc", "-z", "caddy", "443"]
       interval: 20s
@@ -61,9 +60,6 @@ services:
 networks:
   tor-proxy-net:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.25.0.0/16
 
 volumes:
   caddy_data:
