@@ -1,19 +1,69 @@
 services:
-  tor-proxy:
-    image: tor-proxy:latest
-    container_name: tor-proxy
-    build:
-      context: .
-    volumes:
-      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./config/torrc.conf:/etc/tor/torrc:ro
-    ports:
-      - "8080:80"
+  tor:
+    image: dockurr/tor
+    container_name: tor
     networks:
-      - tor-proxy-network
-volumes:
-  config:
-
+      tor-proxy-net:
+        ipv4_address: 172.25.0.100
+    volumes:
+      - ./tor_config:/etc/tor
+      - ./tor_data:/var/lib/tor
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "tor", "9050"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    
+  socat:
+    image: alpine/socat
+    container_name: socat
+    restart: unless-stopped
+    depends_on:
+      tor:
+        condition: service_healthy
+    entrypoint: ["socat"]
+    # Add onion address to environment or use a .env file
+    command: "TCP-LISTEN:8080,fork,reuseaddr SOCKS4A:tor:${ONION_ADDRESS}:80,socksport=9050"
+    networks:
+       tor-proxy-net:
+        ipv4_address: 172.25.0.101
+    healthcheck:
+      test: ["CMD", "nc", "-z", "socat", "8080"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    restart: unless-stopped
+    depends_on:
+      socat:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      tor-proxy-net:
+        ipv4_address: 172.25.0.102
+    healthcheck:
+      test: ["CMD", "nc", "-z", "caddy", "443"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    
 networks:
-  tor-proxy-network:
-    driver: bridge  
+  tor-proxy-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+volumes:
+  caddy_data:
+  caddy_config:

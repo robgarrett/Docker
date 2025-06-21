@@ -1,0 +1,8 @@
+{
+	# Global options
+}
+
+relay.mydomain.com {
+	reverse_proxy socat:8080
+	tls me@email.com
+}

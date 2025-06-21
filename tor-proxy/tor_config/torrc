@@ -1,0 +1,5 @@
+SocksPort 172.25.0.100:9050
+Log notice stdout
+DataDirectory /var/lib/tor
+Nickname robGTorRelay
+ClientOnly 1
