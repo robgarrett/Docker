@@ -6,8 +6,9 @@ services:
       tor-proxy-net:
         ipv4_address: 172.25.0.100
     volumes:
-      - ./tor_config:/etc/tor
-      - ./tor_data:/var/lib/tor
+      - ./torrc:/etc/tor/torrc
+      - tor_config:/etc/tor
+      - tor_data:/var/lib/tor
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "nc", "-z", "tor", "9050"]
@@ -67,3 +68,5 @@ networks:
 volumes:
   caddy_data:
   caddy_config:
+  tor_data:
+  tor_config:
