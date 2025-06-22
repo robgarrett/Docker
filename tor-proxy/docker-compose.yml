@@ -1,68 +1,14 @@
 services:
   tor:
-    image: dockurr/tor
-    container_name: tor
+    image: tor-proxy
+    container_name: tor-proxy
+    build:
+      context: .
+      dockerfile: Dockerfile
     networks:
       - tor-proxy-net
-    volumes:
-      - ./torrc:/etc/tor/torrc
-      - tor_config:/etc/tor
-      - tor_data:/var/lib/tor
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "nc", "-z", "tor", "9050"]
-      interval: 20s
-      timeout: 10s
-      retries: 5
-    
-  socat:
-    image: alpine/socat
-    container_name: socat
-    restart: unless-stopped
-    env_file: 
-      - .env
-    # Ensure that the ONION_ADDRESS is set in the .env file
-    # Example: ONION_ADDRESS=your.onion.address
-    depends_on:
-      tor:
-        condition: service_healthy
-    command: "TCP-LISTEN:8080,fork,reuseaddr SOCKS4A:tor:${ONION_ADDRESS}:80,socksport=9050"
-    networks:
-       - tor-proxy-net
-    healthcheck:
-      test: ["CMD", "nc", "-z", "socat", "8080"]
-      interval: 20s
-      timeout: 10s
-      retries: 5
-    
-  caddy:
-    image: caddy:2
-    container_name: caddy
-    restart: unless-stopped
-    depends_on:
-      socat:
-        condition: service_healthy
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    networks:
-      - tor-proxy-net
-    healthcheck:
-      test: ["CMD", "nc", "-z", "caddy", "443"]
-      interval: 20s
-      timeout: 10s
-      retries: 5
     
 networks:
   tor-proxy-net:
     driver: bridge
 
-volumes:
-  caddy_data:
-  caddy_config:
-  tor_data:
-  tor_config:

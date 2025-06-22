@@ -1,4 +1,4 @@
-SocksPort tor:9050
+SocksPort 9050
 Log notice stdout
 DataDirectory /var/lib/tor
 Nickname robGTorRelay
