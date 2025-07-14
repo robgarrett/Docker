@@ -1,14 +1,40 @@
 services:
   tor:
-    image: tor-proxy
-    container_name: tor-proxy
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: osminogin/tor-simple
+    container_name: tor-socks5
+    ports:
+      - "9050:9050"
+    restart: always
     networks:
-      - tor-proxy-net
-    
+      - tor-network
+
+  flask-proxy:
+    build: .
+    image: tor-flask-proxy
+    container_name: flask-proxy
+    depends_on:
+      - tor
+    networks:
+      - tor-network
+    environment:
+      - HIDDEN_SERVICE=vea76gaz5v5pjbdxtio4q7dld46sa6hgn4zfzdguj3uxz3ihsmjqzoad.onion
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-clearnet-proxy
+    depends_on:
+      - flask-proxy
+    env_file:
+      - .env
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    restart: always
+    networks:
+      - tor-network
+
 networks:
-  tor-proxy-net:
+  tor-network:
     driver: bridge
 
